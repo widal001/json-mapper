@@ -3,62 +3,46 @@
 import argparse
 import json
 import sys
-from pathlib import Path
+from dataclasses import dataclass
 from typing import Any
 
+from json_mapper.transform import transform_from_mapping
+from json_mapper.utils import load_json_file, save_json_file
 
-def load_json_file(file_path: str) -> dict[str, Any]:
-    """Load and parse a JSON file.
-
-    Args:
-        file_path: Path to the JSON file
-
-    Returns:
-        Parsed JSON data as a dictionary
-
-    Raises:
-        FileNotFoundError: If the file doesn't exist
-        json.JSONDecodeError: If the file contains invalid JSON
-    """
-    path = Path(file_path)
-    if not path.exists():
-        raise FileNotFoundError(f"File not found: {file_path}")
-
-    with path.open("r") as f:
-        data = json.load(f)
-        if not isinstance(data, dict):
-            raise TypeError(f"Expected JSON object, got {type(data).__name__}")
-        return data
+# ############################################################
+# CLI Arguments and Parser
+# ############################################################
 
 
-def save_json_file(data: dict[str, Any], file_path: str, indent: int = 2) -> None:
-    """Save data to a JSON file.
+@dataclass
+class CliArgs:
+    """Dataclass representing parsed CLI arguments."""
 
-    Args:
-        data: Dictionary to save as JSON
-        file_path: Path where the JSON file should be saved
-        indent: Number of spaces for indentation (default: 2)
-    """
-    path = Path(file_path)
-    path.parent.mkdir(parents=True, exist_ok=True)
+    mapping: str
+    input: str | None = None
+    output: str | None = None
+    indent: int = 2
+    compact: bool = False
+    verbose: bool = False
 
-    with path.open("w") as f:
-        json.dump(data, f, indent=indent)
+    @classmethod
+    def from_namespace(cls, args: argparse.Namespace) -> "CliArgs":
+        """Create CliArgs from argparse.Namespace.
 
+        Args:
+            args: Parsed arguments from argparse
 
-def map_json(input_data: dict[str, Any], mapping_config: dict[str, Any]) -> dict[str, Any]:
-    """Map JSON data according to a mapping configuration.
-
-    Args:
-        input_data: The input JSON data to transform
-        mapping_config: The mapping configuration that defines the transformation
-
-    Returns:
-        Transformed JSON data
-    """
-    # Placeholder implementation - this is where your mapping logic would go
-    # For now, just return the input data
-    return input_data
+        Returns:
+            CliArgs instance
+        """
+        return cls(
+            mapping=args.mapping,
+            input=args.input,
+            output=args.output,
+            indent=args.indent,
+            compact=args.compact,
+            verbose=args.verbose,
+        )
 
 
 def create_parser() -> argparse.ArgumentParser:
@@ -88,7 +72,9 @@ Examples:
     parser.add_argument("--version", action="version", version="%(prog)s 0.1.0")
 
     # Input file argument
-    parser.add_argument("input", nargs="?", help="Input JSON file (use '-' or omit for stdin)")
+    parser.add_argument(
+        "input", nargs="?", help="Input JSON file (use '-' or omit for stdin)"
+    )
 
     # Mapping configuration
     parser.add_argument(
@@ -110,56 +96,121 @@ Examples:
     )
 
     parser.add_argument(
-        "--compact", action="store_true", help="Output compact JSON (no indentation)"
+        "--compact",
+        action="store_true",
+        help="Output compact JSON (no indentation)",
     )
 
     # Verbose output
-    parser.add_argument("-v", "--verbose", action="store_true", help="Enable verbose output")
+    parser.add_argument(
+        "-v", "--verbose", action="store_true", help="Enable verbose output"
+    )
 
     return parser
 
 
-def main() -> int:
-    """Main entry point for the CLI.
+# ############################################################
+# Transformation Steps
+# ############################################################
+
+
+def load_mapping(args: CliArgs) -> dict[str, Any]:
+    """Load the mapping configuration file.
+
+    Args:
+        args: Parsed CLI arguments
+
+    Returns:
+        Mapping configuration dictionary
+    """
+    if args.verbose:
+        print(f"Loading mapping config from: {args.mapping}", file=sys.stderr)
+    return load_json_file(args.mapping)
+
+
+def load_input(args: CliArgs) -> dict[str, Any]:
+    """Load input data from file or stdin.
+
+    Args:
+        args: Parsed CLI arguments
+
+    Returns:
+        Input data dictionary
+    """
+    if args.input and args.input != "-":
+        if args.verbose:
+            print(f"Loading input from: {args.input}", file=sys.stderr)
+        return load_json_file(args.input)
+    else:
+        if args.verbose:
+            print("Reading input from stdin", file=sys.stderr)
+        data = json.load(sys.stdin)
+        if not isinstance(data, dict):
+            raise TypeError(f"Expected JSON object, got {type(data).__name__}")
+        return data
+
+
+def transform_input(
+    data: dict[str, Any],
+    mapping: dict[str, Any],
+    verbose: bool = False,
+) -> dict[str, Any]:
+    """Transform input data using the mapping configuration.
+
+    Args:
+        data: Input data to transform
+        mapping: Mapping configuration
+        verbose: Whether to print verbose output
+
+    Returns:
+        Transformed data dictionary
+    """
+    if verbose:
+        print("Performing JSON mapping...", file=sys.stderr)
+    return transform_from_mapping(data, mapping)
+
+
+def write_output(data: dict[str, Any], args: CliArgs) -> None:
+    """Write output data to file or stdout.
+
+    Args:
+        data: Output data to write
+        args: Parsed CLI arguments
+    """
+    indent = None if args.compact else args.indent
+
+    if args.output:
+        if args.verbose:
+            print(f"Writing output to: {args.output}", file=sys.stderr)
+        save_json_file(data, args.output, indent=indent or 2)
+    else:
+        json.dump(data, sys.stdout, indent=indent)
+        print()  # Add newline at the end
+
+
+# ############################################################
+# Run CLI
+# ############################################################
+
+
+def run_cli(args: CliArgs) -> int:
+    """Execute the CLI logic with parsed arguments.
+
+    Args:
+        args: Parsed CLI arguments
 
     Returns:
         Exit code (0 for success, non-zero for errors)
     """
-    parser = create_parser()
-    args = parser.parse_args()
-
     try:
-        # Load mapping configuration
-        if args.verbose:
-            print(f"Loading mapping config from: {args.mapping}", file=sys.stderr)
-        mapping_config = load_json_file(args.mapping)
-
-        # Load input data
-        if args.input and args.input != "-":
-            if args.verbose:
-                print(f"Loading input from: {args.input}", file=sys.stderr)
-            input_data = load_json_file(args.input)
-        else:
-            if args.verbose:
-                print("Reading input from stdin", file=sys.stderr)
-            input_data = json.load(sys.stdin)
-
-        # Perform the mapping
-        if args.verbose:
-            print("Performing JSON mapping...", file=sys.stderr)
-        output_data = map_json(input_data, mapping_config)
-
-        # Determine indentation
-        indent = None if args.compact else args.indent
-
-        # Write output
-        if args.output:
-            if args.verbose:
-                print(f"Writing output to: {args.output}", file=sys.stderr)
-            save_json_file(output_data, args.output, indent=indent or 2)
-        else:
-            json.dump(output_data, sys.stdout, indent=indent)
-            print()  # Add newline at the end
+        mapping_config = load_mapping(args)
+        input_data = load_input(args)
+        output_data = transform_input(
+            data=input_data,
+            mapping=mapping_config,
+            verbose=args.verbose,
+        )
+        write_output(output_data, args)
 
         if args.verbose:
             print("Success!", file=sys.stderr)
@@ -172,9 +223,32 @@ def main() -> int:
     except json.JSONDecodeError as e:
         print(f"Error: Invalid JSON - {e}", file=sys.stderr)
         return 1
+    except TypeError as e:
+        print(f"Error: {e}", file=sys.stderr)
+        return 1
+    except ValueError as e:
+        print(f"Error: {e}", file=sys.stderr)
+        return 1
     except Exception as e:
         print(f"Error: {e}", file=sys.stderr)
         return 1
+
+
+# ############################################################
+# Main Entry Point
+# ############################################################
+
+
+def main() -> int:
+    """Main entry point for the CLI.
+
+    Returns:
+        Exit code (0 for success, non-zero for errors)
+    """
+    parser = create_parser()
+    namespace = parser.parse_args()
+    args = CliArgs.from_namespace(namespace)
+    return run_cli(args)
 
 
 if __name__ == "__main__":
