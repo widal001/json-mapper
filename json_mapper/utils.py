@@ -30,7 +30,11 @@ def load_json_file(file_path: str) -> dict[str, Any]:
         return data
 
 
-def save_json_file(data: dict[str, Any], file_path: str, indent: int = 2) -> None:
+def save_json_file(
+    data: dict[str, Any],
+    file_path: str,
+    indent: int = 2,
+) -> None:
     """Save data to a JSON file.
 
     Args:

@@ -57,15 +57,14 @@ def create_parser() -> argparse.ArgumentParser:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  # Map a JSON file using a mapping config
-  json-mapper input.json -m mapping.json -o output.json
+# Map a JSON file using a mapping config
+json-mapper input.json -m mapping.json -o output.json
 
-  # Map JSON from stdin and output to stdout
-  cat input.json | json-mapper -m mapping.json
+# Map JSON from stdin and output to stdout
+cat input.json | json-mapper -m mapping.json
 
-  # Display version information
-  json-mapper --version
-        """,
+# Display version information
+json-mapper --version""",
     )
 
     # Version argument

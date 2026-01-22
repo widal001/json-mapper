@@ -140,7 +140,7 @@ def transform_from_mapping(
     if depth > max_depth:
         raise ValueError("Maximum transformation depth exceeded.")
 
-    def transform_node(node: Any, depth: int) -> Any:
+    def transform_node(node: Any, depth: int) -> Any:  # type: ignore [no-any-return]
         # Check for maximum depth
         # This is a sanity check to prevent stack overflow from deeply nested mappings
         # which may be a concern when running this function on third-party mappings
@@ -182,4 +182,4 @@ def transform_from_mapping(
             return {k: transform_node(v, depth + 1) for k, v in node.items()}
 
     # Recursively walk the mapping until all nested transformations are applied
-    return transform_node(mapping, depth)
+    return transform_node(mapping, depth)  # type: ignore [no-any-return]

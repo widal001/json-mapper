@@ -21,6 +21,14 @@ format:
 	@echo "==> Formatting code with black..."
 	poetry run black json_mapper/
 
+format-check:
+	@echo "==> Checking code formatting with black..."
+	poetry run black --check json_mapper/
+
+lint-fix:
+	@echo "==> Fixing linting errors with ruff..."
+	poetry run ruff check --fix json_mapper/
+
 # Lint code with ruff
 lint:
 	@echo "==> Linting code with ruff..."
@@ -42,8 +50,11 @@ test-cov:
 	poetry run pytest --cov=json_mapper --cov-report=term-missing --cov-report=html
 
 # Run all checks (format, lint, type-check, and test with coverage)
-checks: format lint type-check test-cov
+checks: format-check lint type-check test-cov
 	@echo "==> All checks passed! ✓"
+
+fix: format lint-fix
+	@echo "==> All fixes applied! ✓"
 
 # Clean build artifacts and cache
 clean:
