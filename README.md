@@ -210,8 +210,8 @@ make fix
 # Run all checks (formatting, linting, type-checking, and tests with coverage)
 make checks
 
-# Run example
-make example
+# Run examples
+make examples
 ```
 
 ### Individual Commands
