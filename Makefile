@@ -19,20 +19,20 @@ install:
 # Format code with black
 format:
 	@echo "==> Formatting code with black..."
-	poetry run black json_mapper/
+	poetry run black .
 
 format-check:
 	@echo "==> Checking code formatting with black..."
-	poetry run black --check json_mapper/
+	poetry run black --check .
 
 lint-fix:
 	@echo "==> Fixing linting errors with ruff..."
-	poetry run ruff check --fix json_mapper/
+	poetry run ruff check --fix .
 
 # Lint code with ruff
 lint:
 	@echo "==> Linting code with ruff..."
-	poetry run ruff check json_mapper/
+	poetry run ruff check .
 
 # Run type checking with mypy
 type-check:
@@ -47,7 +47,7 @@ test:
 # Run tests with coverage
 test-cov:
 	@echo "==> Running tests with coverage..."
-	poetry run pytest --cov=json_mapper --cov-report=term-missing --cov-report=html
+	poetry run pytest --cov=json_mapper --cov-report=term-missing --cov-fail-under=95
 
 # Run all checks (format, lint, type-check, and test with coverage)
 checks: format-check lint type-check test-cov

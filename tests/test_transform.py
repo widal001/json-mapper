@@ -100,8 +100,8 @@ class TestSwitchHandler:
                         "archived": "closed",
                     },
                     "default": "custom",
-                }
-            }
+                },
+            },
         }
         result = transform_from_mapping(input_data, mapping)
         assert result == {"status": "open"}
@@ -124,17 +124,17 @@ class TestSwitchHandler:
                             "archived": "closed",
                         },
                         "default": "custom",
-                    }
+                    },
                 },
                 "description": "The opportunity is currently accepting applications",
-            }
+            },
         }
         result = transform_from_mapping(input_data, mapping)
         assert result == {
             "status": {
                 "value": "open",
                 "description": "The opportunity is currently accepting applications",
-            }
+            },
         }
 
 
@@ -154,11 +154,13 @@ class TestNestedStructures:
                 "minAwardAmount": {
                     "amount": {"field": "summary.award_floor"},
                     "currency": "USD",
-                }
-            }
+                },
+            },
         }
         result = transform_from_mapping(input_data, mapping)
-        assert result == {"funding": {"minAwardAmount": {"amount": 10000, "currency": "USD"}}}
+        assert result == {
+            "funding": {"minAwardAmount": {"amount": 10000, "currency": "USD"}},
+        }
 
     def test_deeply_nested_structures(self, input_data):
         """
@@ -168,7 +170,9 @@ class TestNestedStructures:
         field paths can access deeply nested values, and the structure of deeply
         nested objects is preserved.
         """
-        mapping = {"level1": {"level2": {"val": {"field": "summary.forecasted_award_date"}}}}
+        mapping = {
+            "level1": {"level2": {"val": {"field": "summary.forecasted_award_date"}}},
+        }
         result = transform_from_mapping(input_data, mapping)
         assert result == {"level1": {"level2": {"val": "2025-09-01"}}}
 
@@ -202,7 +206,9 @@ class TestCustomHandlers:
 
         # Patch in a concat handler for this test
         def handle_concat(data, concat_spec):
-            return "".join(str(transform_from_mapping(data, part)) for part in concat_spec["parts"])
+            return "".join(
+                str(transform_from_mapping(data, part)) for part in concat_spec["parts"]
+            )
 
         DEFAULT_HANDLERS["concat"] = handle_concat
 
@@ -213,9 +219,9 @@ class TestCustomHandlers:
                         {"field": "opportunity_number"},
                         "-",
                         {"field": "opportunity_id"},
-                    ]
-                }
-            }
+                    ],
+                },
+            },
         }
         result = transform_from_mapping(input_data, mapping)
         assert result == {"opportunity_code": "ABC-123-XYZ-001-12345"}
@@ -243,7 +249,9 @@ class TestCustomHandlers:
             "type": handle_type,
         }
 
-        mapping = {"id_str": {"type": {"value": {"field": "opportunity_id"}, "to": "string"}}}
+        mapping = {
+            "id_str": {"type": {"value": {"field": "opportunity_id"}, "to": "string"}},
+        }
         result = transform_from_mapping(input_data, mapping, handlers=handlers)
         assert result == {"id_str": "12345"}
 

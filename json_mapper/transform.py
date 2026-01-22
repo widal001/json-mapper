@@ -85,7 +85,6 @@ DEFAULT_HANDLERS: dict[str, handler_func] = {
 def transform_from_mapping(
     data: dict,
     mapping: dict,
-    depth: int = 0,
     max_depth: int = 500,
     handlers: dict[str, handler_func] = DEFAULT_HANDLERS,
 ) -> dict:
@@ -100,7 +99,6 @@ def transform_from_mapping(
     Args:
         data: The source data dictionary to transform
         mapping: A dictionary describing how to transform the data
-        depth: Current recursion depth (used internally)
         max_depth: Maximum allowed recursion depth
         handlers: A dictionary of handler functions to use for the transformations
 
@@ -134,11 +132,7 @@ def transform_from_mapping(
     }
     ```
     """
-    # Check for maximum depth
-    # This is a sanity check to prevent stack overflow from deeply nested mappings
-    # which may be a concern when running this function on third-party mappings
-    if depth > max_depth:
-        raise ValueError("Maximum transformation depth exceeded.")
+    depth = 0
 
     def transform_node(node: Any, depth: int) -> Any:  # type: ignore [no-any-return]
         # Check for maximum depth
@@ -158,7 +152,7 @@ def transform_from_mapping(
             # If the key is a reserved word, call the matching handler function
             # on the value and return the result.
             # Node: `{ "field": "opportunity_status" }`
-            # Returns: `extract_field_value(data, "opportunity_status")`
+            # Returns: `pluck_field_value(data, "opportunity_status")`
             if k in handlers:
                 handler_func = handlers[k]
                 return handler_func(data, v)

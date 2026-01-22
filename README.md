@@ -7,9 +7,6 @@ A Python CLI tool that translates JSON values from one format to another using a
 ```bash
 # Install with poetry
 poetry install
-
-# Or install in development mode
-pip install -e .
 ```
 
 ## Usage
@@ -18,13 +15,23 @@ pip install -e .
 
 ```bash
 # Map a JSON file using a mapping configuration
-json-mapper input.json -m mapping.json -o output.json
+poetry run json-mapper examples/input.json -m examples/mapping.json -o output.json
 
-# Read from stdin, write to stdout
-cat input.json | json-mapper -m mapping.json
+# Print result to stdout 
+poetry run json-mapper examples/input.json -m examples/mapping.json
+```
 
-# Use verbose mode to see what's happening
-json-mapper input.json -m mapping.json -o output.json -v
+You should see the following output:
+
+```json
+{
+  "name": {
+    "firstName": "John",
+    "lastName": "Doe"
+  },
+  "email": "john@example.com",
+  "age": 30
+}
 ```
 
 ### Command-Line Options
@@ -41,8 +48,6 @@ options:
   -o OUTPUT, --output OUTPUT
                         Output file (default: stdout)
   --indent INDENT       Number of spaces for JSON indentation (default: 2)
-  --compact             Output compact JSON (no indentation)
-  -v, --verbose         Enable verbose output
 ```
 
 ## Examples
@@ -52,9 +57,10 @@ options:
 **input.json:**
 ```json
 {
-  "name": "John Doe",
+  "first_name": "John Doe",
+  "last_name": "Doe",
   "age": 30,
-  "email": "john@example.com"
+  "email_address": "john@example.com"
 }
 ```
 
@@ -62,8 +68,12 @@ options:
 ```json
 {
   "fields": {
-    "name": "fullName",
-    "email": "emailAddress"
+    "name": {
+      "firstName": { "field": "first_name" },
+      "lastName": { "field": "last_name" }
+    },
+    "email": { "field": "email_address" },
+    "age": { "field": "age" }
   }
 }
 ```
@@ -71,6 +81,18 @@ options:
 **Command:**
 ```bash
 json-mapper input.json -m mapping.json -o output.json
+```
+
+**Output:**
+```json
+{
+  "name": {
+    "firstName": "John",
+    "lastName": "Doe"
+  },
+  "email": "john@example.com",
+  "age": 30
+}
 ```
 
 ### Example 2: Pipeline Usage
