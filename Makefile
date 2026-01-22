@@ -1,5 +1,7 @@
 .PHONY: help install format lint type-check test test-cov checks clean
 
+RUN_CMD := poetry run
+
 # Default target
 help:
 	@echo "Available targets:"
@@ -14,40 +16,45 @@ help:
 
 # Install dependencies
 install:
-	poetry install
+	$(RUN_CMD) poetry install
 
 # Format code with black
 format:
 	@echo "==> Formatting code with black..."
-	poetry run black .
+	$(RUN_CMD) black .
 
 format-check:
 	@echo "==> Checking code formatting with black..."
-	poetry run black --check .
+	$(RUN_CMD) black --check .
 
 lint-fix:
 	@echo "==> Fixing linting errors with ruff..."
-	poetry run ruff check --fix .
+	$(RUN_CMD) ruff check --fix .
 
 # Lint code with ruff
 lint:
 	@echo "==> Linting code with ruff..."
-	poetry run ruff check .
+	$(RUN_CMD) ruff check .
 
 # Run type checking with mypy
 type-check:
 	@echo "==> Running type checks with mypy..."
-	poetry run mypy json_mapper/
+	$(RUN_CMD) mypy json_mapper/
 
 # Run tests without coverage
 test:
 	@echo "==> Running tests..."
-	poetry run pytest
+	$(RUN_CMD) pytest
 
 # Run tests with coverage
 test-cov:
 	@echo "==> Running tests with coverage..."
-	poetry run pytest --cov=json_mapper --cov-report=term-missing --cov-fail-under=95
+	$(RUN_CMD) pytest --cov=json_mapper --cov-report=term-missing --cov-fail-under=95
+
+# Run example
+example:
+	@echo "==> Running example..."
+	$(RUN_CMD) json-mapper examples/input.json -m examples/mapping.json
 
 # Run all checks (format, lint, type-check, and test with coverage)
 checks: format-check lint type-check test-cov
