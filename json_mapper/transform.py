@@ -70,10 +70,20 @@ def switch_on_value(data: dict, switch_spec: dict) -> Any:
     return lookup.get(val, switch_spec.get("default"))
 
 
+def concat_values(data: dict, concat_spec: dict) -> Any:
+    """
+    Handles a concatenation transformation by joining multiple values together.
+    """
+    return "".join(
+        str(transform_from_mapping(data, part)) for part in concat_spec["parts"]
+    )
+
+
 # Registry for handlers
 DEFAULT_HANDLERS: dict[str, handler_func] = {
     "field": pluck_field_value,
     "switch": switch_on_value,
+    "concat": concat_values,
 }
 
 

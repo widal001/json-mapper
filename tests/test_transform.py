@@ -171,7 +171,9 @@ class TestNestedStructures:
         nested objects is preserved.
         """
         mapping = {
-            "level1": {"level2": {"val": {"field": "summary.forecasted_award_date"}}},
+            "level1": {
+                "level2": {"val": {"field": "summary.forecasted_award_date"}},
+            },
         }
         result = transform_from_mapping(input_data, mapping)
         assert result == {"level1": {"level2": {"val": "2025-09-01"}}}
@@ -195,6 +197,34 @@ class TestListHandling:
 class TestCustomHandlers:
     """Tests for extending the transformation system with custom handlers."""
 
+    def test_multiply_handler(self, input_data):
+        """
+        Test custom handler for multiplying numeric values.
+
+        Verifies that custom handlers can be added to the transformation system,
+        the multiply handler can scale numeric values by a factor, and the
+        handler works with field values.
+        """
+
+        # Patch in a multiply handler for this test
+        def handle_multiply(data, multiply_spec):
+            value = transform_from_mapping(data, multiply_spec["value"])
+            factor = multiply_spec["by"]
+            return value * factor
+
+        DEFAULT_HANDLERS["multiply"] = handle_multiply
+
+        mapping = {
+            "max_award_doubled": {
+                "multiply": {
+                    "value": {"field": "summary.award_ceiling"},
+                    "by": 2,
+                },
+            },
+        }
+        result = transform_from_mapping(input_data, mapping)
+        assert result == {"max_award_doubled": 200000}
+
     def test_concat_handler(self, input_data):
         """
         Test custom handler for concatenating values.
@@ -207,7 +237,8 @@ class TestCustomHandlers:
         # Patch in a concat handler for this test
         def handle_concat(data, concat_spec):
             return "".join(
-                str(transform_from_mapping(data, part)) for part in concat_spec["parts"]
+                str(transform_from_mapping(data, part))
+                for part in concat_spec["parts"]
             )
 
         DEFAULT_HANDLERS["concat"] = handle_concat
@@ -250,7 +281,9 @@ class TestCustomHandlers:
         }
 
         mapping = {
-            "id_str": {"type": {"value": {"field": "opportunity_id"}, "to": "string"}},
+            "id_str": {
+                "type": {"value": {"field": "opportunity_id"}, "to": "string"},
+            },
         }
         result = transform_from_mapping(input_data, mapping, handlers=handlers)
         assert result == {"id_str": "12345"}
