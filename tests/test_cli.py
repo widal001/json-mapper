@@ -1,77 +1,61 @@
 """Tests for the CLI module."""
 
-import json
-import tempfile
-from pathlib import Path
-
 import pytest
 
-from json_mapper.cli import load_json_file, save_json_file, map_json, create_parser
+from json_mapper.cli import (
+    CliArgs,
+    create_parser,
+    load_input,
+    load_mapping,
+    transform_input,
+)
 
 
-class TestLoadJsonFile:
-    """Tests for load_json_file function."""
+class TestLoadMapping:
+    """Tests for load_mapping function."""
 
-    def test_load_valid_json(self, tmp_path: Path) -> None:
-        """Test loading a valid JSON file."""
-        test_file = tmp_path / "test.json"
-        test_data = {"key": "value", "number": 42}
-        test_file.write_text(json.dumps(test_data))
+    def test_load_mapping(self, tmp_path) -> None:
+        """Test loading a mapping configuration file."""
+        import json
 
-        result = load_json_file(str(test_file))
-        assert result == test_data
+        mapping_file = tmp_path / "mapping.json"
+        mapping_data = {"field1": {"field": "source_field"}}
+        mapping_file.write_text(json.dumps(mapping_data))
 
-    def test_load_nonexistent_file(self) -> None:
-        """Test loading a file that doesn't exist."""
-        with pytest.raises(FileNotFoundError):
-            load_json_file("nonexistent.json")
+        args = CliArgs(mapping=str(mapping_file))
+        result = load_mapping(args)
 
-    def test_load_invalid_json(self, tmp_path: Path) -> None:
-        """Test loading a file with invalid JSON."""
-        test_file = tmp_path / "invalid.json"
-        test_file.write_text("not valid json {")
-
-        with pytest.raises(json.JSONDecodeError):
-            load_json_file(str(test_file))
+        assert result == mapping_data
 
 
-class TestSaveJsonFile:
-    """Tests for save_json_file function."""
+class TestLoadInput:
+    """Tests for load_input function."""
 
-    def test_save_json(self, tmp_path: Path) -> None:
-        """Test saving JSON to a file."""
-        test_file = tmp_path / "output.json"
-        test_data = {"key": "value", "nested": {"data": [1, 2, 3]}}
+    def test_load_input_from_file(self, tmp_path) -> None:
+        """Test loading input from a file."""
+        import json
 
-        save_json_file(test_data, str(test_file))
-
-        assert test_file.exists()
-        loaded_data = json.loads(test_file.read_text())
-        assert loaded_data == test_data
-
-    def test_save_creates_directories(self, tmp_path: Path) -> None:
-        """Test that save_json_file creates parent directories."""
-        test_file = tmp_path / "subdir" / "nested" / "output.json"
-        test_data = {"test": "data"}
-
-        save_json_file(test_data, str(test_file))
-
-        assert test_file.exists()
-        assert test_file.parent.exists()
-
-
-class TestMapJson:
-    """Tests for map_json function."""
-
-    def test_map_json_placeholder(self) -> None:
-        """Test the placeholder map_json implementation."""
+        input_file = tmp_path / "input.json"
         input_data = {"key": "value"}
-        mapping_config = {"fields": {}}
+        input_file.write_text(json.dumps(input_data))
 
-        result = map_json(input_data, mapping_config)
+        args = CliArgs(mapping="mapping.json", input=str(input_file))
+        result = load_input(args)
 
-        # Currently just returns input data unchanged
         assert result == input_data
+
+
+class TestTransformInput:
+    """Tests for transform_input function."""
+
+    def test_transform_input(self) -> None:
+        """Test transforming input data with a mapping."""
+        input_data = {"source_field": "test_value"}
+        mapping = {"target_field": {"field": "source_field"}}
+
+        result = transform_input(input_data, mapping)
+
+        assert result == {"target_field": "test_value"}
 
 
 class TestCreateParser:
@@ -123,3 +107,45 @@ class TestCreateParser:
         assert args.verbose
         assert args.compact
         assert args.indent == 4
+
+
+class TestCliArgs:
+    """Tests for CliArgs dataclass."""
+
+    def test_from_namespace(self) -> None:
+        """Test creating CliArgs from argparse Namespace."""
+        parser = create_parser()
+        namespace = parser.parse_args(["-m", "mapping.json", "input.json"])
+        args = CliArgs.from_namespace(namespace)
+
+        assert args.mapping == "mapping.json"
+        assert args.input == "input.json"
+        assert args.output is None
+        assert args.indent == 2
+        assert not args.compact
+        assert not args.verbose
+
+    def test_from_namespace_all_options(self) -> None:
+        """Test creating CliArgs with all options."""
+        parser = create_parser()
+        namespace = parser.parse_args(
+            [
+                "input.json",
+                "-m",
+                "mapping.json",
+                "-o",
+                "output.json",
+                "-v",
+                "--compact",
+                "--indent",
+                "4",
+            ]
+        )
+        args = CliArgs.from_namespace(namespace)
+
+        assert args.mapping == "mapping.json"
+        assert args.input == "input.json"
+        assert args.output == "output.json"
+        assert args.indent == 4
+        assert args.compact
+        assert args.verbose
