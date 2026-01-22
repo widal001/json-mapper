@@ -2,14 +2,22 @@
 
 A Python CLI tool that translates JSON values from one format to another using a declarative mapping configuration.
 
+## Table of Contents
+- [Installation](#installation)
+- [Usage](#usage)
+- [Examples](#examples)
+- [Development](#development)
+- [Project Structure](#project-structure)
+
 ## Installation
+
+Prerequisites:
+- Python 3.13+
+- Poetry
 
 ```bash
 # Install with poetry
 poetry install
-
-# Or install in development mode
-pip install -e .
 ```
 
 ## Usage
@@ -18,13 +26,39 @@ pip install -e .
 
 ```bash
 # Map a JSON file using a mapping configuration
-json-mapper input.json -m mapping.json -o output.json
+poetry run json-mapper examples/input.json -m examples/mapping.json -o output.json
 
-# Read from stdin, write to stdout
-cat input.json | json-mapper -m mapping.json
+# Print result to stdout 
+poetry run json-mapper examples/input.json -m examples/mapping.json
+```
 
-# Use verbose mode to see what's happening
-json-mapper input.json -m mapping.json -o output.json -v
+You should see the following output:
+
+```json
+{
+  "title": "Research Grant",
+  "opportunityCode": "ABC-123-12345",
+  "status": "open",
+  "agency": {
+    "name": "Department of Examples",
+    "type": "Federal"
+  },
+  "contact": {
+    "name": "Jane Smith",
+    "email": "jane.smith@example.gov",
+    "phone": "555-0100"
+  },
+  "funding": {
+    "minimum": 10000,
+    "maximum": 100000,
+    "currency": "USD"
+  },
+  "eligibility": [
+    "state_governments",
+    "nonprofit"
+  ],
+  "deadline": "2025-07-15"
+}
 ```
 
 ### Command-Line Options
@@ -41,9 +75,16 @@ options:
   -o OUTPUT, --output OUTPUT
                         Output file (default: stdout)
   --indent INDENT       Number of spaces for JSON indentation (default: 2)
-  --compact             Output compact JSON (no indentation)
-  -v, --verbose         Enable verbose output
 ```
+
+### Supported Transformations
+
+| Transformation | Handler  | Description                                                  | Example                                                                    |
+| -------------- | -------- | ------------------------------------------------------------ | -------------------------------------------------------------------------- |
+| Field plucking | `field`  | Plucks a value from the input data using a dot-notation path | `{"field": "name.firstName"}`                                              |
+| Literal value  | --       | Passes through a literal value unchanged                     | `{"amount": 42}`                                                           |
+| Switch         | `switch` | Performs a case-based lookup based on a field value          | `{"switch": {"field": "status", "case": {...}, "default": "unknown"}}`     |
+| Concatenation  | `concat` | Joins multiple values together                               | `{"concat": {"parts": [{"field": "amount"}, " ", {"field": "currency"}]}}` |
 
 ## Examples
 
@@ -52,9 +93,10 @@ options:
 **input.json:**
 ```json
 {
-  "name": "John Doe",
+  "first_name": "John Doe",
+  "last_name": "Doe",
   "age": 30,
-  "email": "john@example.com"
+  "email_address": "john@example.com"
 }
 ```
 
@@ -62,8 +104,12 @@ options:
 ```json
 {
   "fields": {
-    "name": "fullName",
-    "email": "emailAddress"
+    "name": {
+      "firstName": { "field": "first_name" },
+      "lastName": { "field": "last_name" }
+    },
+    "email": { "field": "email_address" },
+    "age": { "field": "age" }
   }
 }
 ```
@@ -73,23 +119,99 @@ options:
 json-mapper input.json -m mapping.json -o output.json
 ```
 
-### Example 2: Pipeline Usage
+**Output:**
+```json
+{
+  "name": {
+    "firstName": "John",
+    "lastName": "Doe"
+  },
+  "email": "john@example.com",
+  "age": 30
+}
+```
 
-```bash
-# Use in a data processing pipeline
-curl https://api.example.com/data.json | json-mapper -m mapping.json | jq '.results'
+### Example 2: Concatenation
+
+**input.json:**
+```json
+{
+  "first_name": "John",
+  "last_name": "Doe"
+}
+```
+
+**mapping.json:**
+```json
+{
+  "fullName": {
+    "concat": {
+      "parts": [
+        { "field": "first_name" },
+        " ",
+        { "field": "last_name" }
+      ]
+    }
+  }
+}
+```
+
+**Output:**
+```json
+{
+  "fullName": "John Doe"
+}
+```
+
+### Example 3: Switch
+
+**input.json:**
+```json
+{
+  "opportunity_status": "posted"
+}
+```
+
+**mapping.json:**
+```json
+{
+  "status": {
+    "switch": {
+      "field": "opportunity_status",
+      "case": {
+        "posted": "open",
+        "forecasted": "upcoming",
+        "archived": "closed"
+      },
+      "default": "unknown"
+    }
+  }
+}
+```
+
+**Output:**
+```json
+{
+  "status": "open"
+}
 ```
 
 ## Development
 
-### Quick Start
+### Quickstart commands
 
 ```bash
 # Install dependencies
 make install
 
+# Fix auto-formatting and linting errors
+make fix
+
 # Run all checks (formatting, linting, type-checking, and tests with coverage)
 make checks
+
+# Run examples
+make examples
 ```
 
 ### Individual Commands
@@ -120,10 +242,10 @@ If you prefer to run commands directly:
 
 ```bash
 # Format code
-poetry run black json_mapper/
+poetry run black .
 
 # Lint code
-poetry run ruff check json_mapper/
+poetry run ruff check .
 
 # Type check
 poetry run mypy json_mapper/
@@ -138,15 +260,19 @@ poetry run pytest --cov=json_mapper --cov-report=term-missing --cov-report=html
 ## Project Structure
 
 ```
-sample-python-tool/
-├── json_mapper/
-│   ├── __init__.py       # Package initialization
-│   └── cli.py            # CLI implementation with argparse
-├── pyproject.toml        # Project configuration and dependencies
-├── poetry.lock           # Locked dependencies
-└── README.md            # This file
+root/
+├── examples/           # Example input and mapping files
+│   ├── input.json      # Sample input data
+│   └── mapping.json    # Sample mapping configuration
+├── json_mapper/        # The package
+│   ├── transform.py    # Core transformation logic
+│   ├── utils.py        # Utility functions
+│   └── cli.py          # CLI implementation with argparse
+├── tests/              # Test suite
+│   ├── test_transform.py   # Transformation tests
+│   ├── test_utils.py       # Utility function tests
+│   └── test_cli.py         # CLI tests
+├── Makefile            # Common development tasks
+├── pyproject.toml      # Project configuration and dependencies
+└── poetry.lock         # Locked dependencies
 ```
-
-## License
-
-MIT
