@@ -2,7 +2,7 @@
 authors = [
   {name = "widal001", email = "billy.daly@agile6.com"},
 ]
-dependencies = []
+dependencies = ["pyyaml (>=6.0.3,<7.0.0)"]
 description = "Translates JSON values from one format to another using a declarative mapping config"
 name = "json-mapper"
 readme = "README.md"
