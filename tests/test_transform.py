@@ -234,15 +234,6 @@ class TestCustomHandlers:
         handler works with both field values and constants.
         """
 
-        # Patch in a concat handler for this test
-        def handle_concat(data, concat_spec):
-            return "".join(
-                str(transform_from_mapping(data, part))
-                for part in concat_spec["parts"]
-            )
-
-        DEFAULT_HANDLERS["concat"] = handle_concat
-
         mapping = {
             "opportunity_code": {
                 "concat": {

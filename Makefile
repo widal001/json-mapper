@@ -1,4 +1,4 @@
-.PHONY: help install format lint type-check test test-cov checks clean
+.PHONY: help install format format-check lint lint-fix type-check test test-cov checks clean examples
 
 RUN_CMD := poetry run
 
@@ -52,15 +52,18 @@ test-cov:
 	$(RUN_CMD) pytest --cov=json_mapper --cov-report=term-missing --cov-fail-under=95
 
 # Run example
-example:
-	@echo "==> Running example..."
+examples:
+	@echo "==> Running examples..."
+	@echo "\n\n==> Example 1: Print to stdout"
 	$(RUN_CMD) json-mapper examples/input.json -m examples/mapping.json
+	@echo "\n\n==> Example 2: Print to file"
+	$(RUN_CMD) json-mapper examples/input.json -m examples/mapping.json -o output/output.json
 
 # Run all checks (format, lint, type-check, and test with coverage)
 checks: format-check lint type-check test-cov
 	@echo "==> All checks passed! ✓"
 
-fix: format lint-fix
+fix: lint-fix format
 	@echo "==> All fixes applied! ✓"
 
 # Clean build artifacts and cache
