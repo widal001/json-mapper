@@ -1,0 +1,66 @@
+[project]
+authors = [
+  {name = "widal001", email = "billy.daly@agile6.com"},
+]
+dependencies = []
+description = "Translates JSON values from one format to another using a declarative mapping config"
+name = "json-mapper"
+readme = "README.md"
+requires-python = ">=3.13"
+version = "0.1.0"
+
+[project.scripts]
+json-mapper = "json_mapper.cli:main"
+
+[tool.poetry]
+
+[tool.poetry.group.dev.dependencies]
+black = "^26.1.0"
+mypy = "^1.19.1"
+pytest = "^9.0.2"
+pytest-cov = "^6.0.0"
+ruff = "^0.14.13"
+
+[tool.pytest.ini_options]
+addopts = "-v --strict-markers"
+python_classes = ["Test*"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
+testpaths = ["tests"]
+
+[tool.coverage.run]
+omit = ["tests/*", "**/__pycache__/*"]
+source = ["json_mapper"]
+
+[tool.coverage.report]
+exclude_lines = [
+  "pragma: no cover",
+  "def __repr__",
+  "raise AssertionError",
+  "raise NotImplementedError",
+  "if __name__ == .__main__.:",
+  "if TYPE_CHECKING:",
+]
+
+[tool.black]
+line-length = 100
+target-version = ["py313"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+
+[tool.ruff.lint]
+ignore = []
+select = ["E", "F", "I", "N", "W", "UP"]
+
+[tool.mypy]
+disallow_incomplete_defs = true
+disallow_untyped_defs = true
+python_version = "3.13"
+warn_return_any = true
+warn_unused_configs = true
+
+[build-system]
+build-backend = "poetry.core.masonry.api"
+requires = ["poetry-core>=2.0.0,<3.0.0"]
