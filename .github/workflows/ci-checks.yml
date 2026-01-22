@@ -1,0 +1,30 @@
+name: "CI - Run Checks"
+
+on:
+  pull_request:
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install Poetry
+        uses: Gr1N/setup-poetry@v8
+
+      - name: Install poetry-audit-plugin
+        run: poetry self add poetry-audit-plugin
+
+      - name: Install dependencies
+        run: poetry install
+
+      - name: Audit dependencies for vulnerabilities
+        run: poetry audit
+
+      - name: Run checks
+        run: make checks
