@@ -204,7 +204,8 @@ json-mapper input.json -m mapping.json -o output.json
 # Install dependencies
 make install
 
-# Fix auto-formatting and linting errors
+# Fix auto-formatting and linting errors.
+# You may need to run this multiple times to catch linting errors introduced by reformatting.
 make fix
 
 # Run all checks (formatting, linting, type-checking, and tests with coverage)

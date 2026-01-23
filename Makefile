@@ -63,7 +63,7 @@ examples:
 checks: format-check lint type-check test-cov
 	@echo "==> All checks passed! ✓"
 
-fix: lint-fix format
+fix: format lint-fix
 	@echo "==> All fixes applied! ✓"
 
 # Clean build artifacts and cache
