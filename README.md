@@ -3,11 +3,31 @@
 A Python CLI tool that translates JSON values from one format to another using a declarative mapping configuration.
 
 ## Table of Contents
+- [Project Structure](#project-structure)
 - [Installation](#installation)
 - [Usage](#usage)
 - [Examples](#examples)
 - [Development](#development)
-- [Project Structure](#project-structure)
+
+## Project Structure
+
+```
+root/
+├── examples/           # Example input and mapping files
+│   ├── input.json      # Sample input data
+│   └── mapping.json    # Sample mapping configuration
+├── json_mapper/        # The package
+│   ├── transform.py    # Core transformation logic
+│   ├── utils.py        # Utility functions
+│   └── cli.py          # CLI implementation with argparse
+├── tests/              # Test suite
+│   ├── test_transform.py   # Transformation tests
+│   ├── test_utils.py       # Utility function tests
+│   └── test_cli.py         # CLI tests
+├── Makefile            # Common development tasks
+├── pyproject.toml      # Project configuration and dependencies
+└── poetry.lock         # Locked dependencies
+```
 
 ## Installation
 
@@ -65,7 +85,7 @@ You should see the following output:
 
 ```
 positional arguments:
-  input                 Input JSON file (use '-' or omit for stdin)
+  input                 Input JSON file
 
 options:
   -h, --help            show this help message and exit
@@ -103,20 +123,18 @@ options:
 **mapping.json:**
 ```json
 {
-  "fields": {
-    "name": {
-      "firstName": { "field": "first_name" },
-      "lastName": { "field": "last_name" }
-    },
-    "email": { "field": "email_address" },
-    "age": { "field": "age" }
-  }
+  "name": {
+    "firstName": { "field": "first_name" },
+    "lastName": { "field": "last_name" }
+  },
+  "email": { "field": "email_address" },
+  "age": { "field": "age" }
 }
 ```
 
 **Command:**
 ```bash
-json-mapper input.json -m mapping.json -o output.json
+poetry run json-mapper examples/input.json -m examples/mapping.json
 ```
 
 **Output:**
@@ -256,24 +274,4 @@ poetry run pytest
 
 # Run tests with coverage
 poetry run pytest --cov=json_mapper --cov-report=term-missing --cov-report=html
-```
-
-## Project Structure
-
-```
-root/
-├── examples/           # Example input and mapping files
-│   ├── input.json      # Sample input data
-│   └── mapping.json    # Sample mapping configuration
-├── json_mapper/        # The package
-│   ├── transform.py    # Core transformation logic
-│   ├── utils.py        # Utility functions
-│   └── cli.py          # CLI implementation with argparse
-├── tests/              # Test suite
-│   ├── test_transform.py   # Transformation tests
-│   ├── test_utils.py       # Utility function tests
-│   └── test_cli.py         # CLI tests
-├── Makefile            # Common development tasks
-├── pyproject.toml      # Project configuration and dependencies
-└── poetry.lock         # Locked dependencies
 ```
